@@ -1,7 +1,7 @@
 """
 Author: Tomas Dal Farra
-Date:
-Description:
+Date: 25/12/2022
+Description: Defines a class where to handle a dictionary database within a file
 """
 from dict_database import DataBase
 import pickle
@@ -16,7 +16,7 @@ class FileDataBase(DataBase):
     def __init__(self, file_name="dbfile.bin"):
         self.file_name = file_name
         super().__init__()
-        if not self.non_zero_file(self.file_name):      # creates file with empty dictionary if it doesn't exist
+        if not self._non_zero_file(self.file_name):      # creates file with empty dictionary if it doesn't exist
             with open(self.file_name, 'wb') as f:
                 pickle.dump({}, f)
                 logging.debug("New database initialized")
@@ -26,7 +26,7 @@ class FileDataBase(DataBase):
                 logging.debug("Previous database content loaded")
 
     @staticmethod
-    def non_zero_file(file_path) -> bool:
+    def _non_zero_file(file_path) -> bool:
         """
         Checks if a file exists and if it has any content
         :param file_path: path for file to check
@@ -47,13 +47,12 @@ class FileDataBase(DataBase):
         try:
             with open(self.file_name, 'rb') as f:
                 self.db = pickle.load(f)
-            super().set_value(key, val)
+            is_set = super().set_value(key, val)
             with open(self.file_name, 'wb') as f:
                 pickle.dump(self.db, f)
-            return True
+            return is_set
         except Exception as err:
             logging.error(f"There was a problem to set value: {err}")
-            # return False
             raise err
 
     def get_value(self, key):
@@ -69,7 +68,6 @@ class FileDataBase(DataBase):
             return super().get_value(key)
         except Exception as err:
             logging.error(f"There was a problem to get value: {err}")
-            # return None
             raise err
 
     def delete_value(self, key):
@@ -89,7 +87,14 @@ class FileDataBase(DataBase):
             logging.error(f"There was a problem to delete value: {err}")
             raise err
 
-    def __str__(self):
+    def get_name(self) -> str:
+        """
+        Gets file name
+        :return: file name
+        """
+        return self.file_name
+
+    def __repr__(self):
         """
         Prints file name and then file dictionary
         :return: string description of the database
@@ -100,15 +105,23 @@ class FileDataBase(DataBase):
         except Exception as err:
             logging.error(f"There was a problem trying to print database: {err}")
             raise err
-        return f"{self.file_name}: " + super().__str__()
-
-
-def main():
-    database = DataBase()
-    database.set_value('1', '2')
-    database.set_value(1, '3')
-    database.delete_value('1')
+        return f"{self.file_name}: " + super().__repr__()
 
 
 if __name__ == "__main__":
-    main()
+    database = FileDataBase('testfile.bin')
+    try:
+        assert database.set_value('1', '2')
+        assert database.set_value(1, '3')
+        assert database.get_value(1) == '3'
+        assert database.delete_value('1') == '2'
+        assert database.get_value('1') is None
+        assert database.delete_value('1') is None
+        assert repr(database) == database.get_name() + ": {1: '3'}"
+    finally:
+        os.remove(database.get_name())
+    # logging configuration just when running
+    log_file = "file_database.log"                                                   # file to save the log
+    log_level = logging.DEBUG                                                        # set the minimum logger level
+    log_format = "[%(filename)s] - %(asctime)s - %(levelname)s - %(message)s"        # logging format
+    logging.basicConfig(filename=log_file, level=log_level, format=log_format)

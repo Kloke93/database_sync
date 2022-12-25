@@ -1,7 +1,7 @@
 """
 Author: Tomas Dal Farra
-Date:
-Description:
+Date: 25/12/2022
+Description: Interface for a database based on a python dictionary
 """
 
 
@@ -18,7 +18,11 @@ class DataBase:
         :param key: Key for the database
         :param val: Value of the key
         """
-        self.db[key] = val
+        try:
+            self.db[key] = val
+            return True
+        except KeyError:
+            return False
 
     def get_value(self, key):
         """
@@ -37,7 +41,7 @@ class DataBase:
         """
         return self.db.pop(key, None)
 
-    def __str__(self):
+    def __repr__(self):
         """
         Prints dictionary database
         :return: string description of the database
@@ -46,4 +50,10 @@ class DataBase:
 
 
 if __name__ == "__main__":
-    pass
+    dbase = DataBase()
+    assert dbase.set_value('1', 'a')
+    assert dbase.get_value('1') == 'a'
+    assert dbase.get_value('2') is None
+    assert dbase.delete_value('2') is None
+    assert dbase.delete_value('1') == 'a'
+    assert repr(dbase) == '{}'
